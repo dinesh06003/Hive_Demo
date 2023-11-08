@@ -24,4 +24,5 @@ Initialize Derby and hive (ONE TIME only)
 schematool -initSchema -dbType derby
 
 To start Hive
+
 hive
