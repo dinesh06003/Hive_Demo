@@ -1,0 +1,79 @@
+//enter into hive environment
+hive
+
+//create a database
+Create Database mydb;
+Show Databases;
+// Drop Database mydb;
+
+
+##### Table Twitter ######
+
+//create table
+Create Table Twitter (`date` date, date_time timestamp, tweet_text string, type string, media_type string, hashtags string, tweet_url string, retweets int) ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' LINES TERMINATED BY '\n' STORED AS TEXTFILE;
+
+//Drop Table Twitter
+
+//load data
+Load Data Local Inpath '/home/sg8rq/Downloads/Hive/InputFile/Twitter.txt' Into Table Twitter;
+
+//see tweet_text where type is 'link'
+Select tweet_text, type From Twitter Where type='text' limit 3;
+
+//see 10 tweet_text order by retweet descending
+Select retweets, tweet_text From Twitter Order by retweets desc limit 10;
+
+//see hashtags order by date_time
+Select date_time, hashtags From Twitter Where hashtags != '' Order by date_time;
+
+
+//see how many tweets per date and per type where media type is not empty
+Select `date`, type, count(*) From Twitter Where media_type != '' Group By `date`, type Order By `date` desc;
+
+//see max retweets per date where media type is not empty and max retweets must be more than 10000.
+Select `date`, max(retweets) as mt From Twitter Where media_type = 'photo' Group By `date` having mt>10000 Order By mt;
+
+
+
+###### Twitter Table with Partition+Bucket
+[will not work] 
+Alter Table Twitter Add Partition (type='text');
+
+
+//create table
+Create Table TwitterMod (
+`date` date,
+date_time timestamp,
+tweet_text string,
+media_type string,
+hashtags string,
+tweet_url string, 
+retweets int)
+Partitioned By (type string)
+Clustered By (`date`) Into 3 Buckets
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+LINES TERMINATED BY '\n'
+STORED AS TEXTFILE;
+
+//Drop Table TwitterMod;
+//Describe Extended TwitterMod;
+
+
+Insert Into TwitterMod Partition (type='text') Select `date`,date_time,tweet_text,media_type,hashtags,tweet_url,retweets From Twitter Where type='text';
+Insert Into TwitterMod Partition (type='link') Select `date`,date_time,tweet_text,media_type,hashtags,tweet_url,retweets From Twitter Where type='link';
+Insert Into TwitterMod Partition (type='video') Select `date`,date_time,tweet_text,media_type,hashtags,tweet_url,retweets From Twitter Where type='video';
+
+
+
+//See if partition works
+//partition reduces access time
+Show Partitions TwitterMod;
+Select Count(*) From Twitter Where type='text';
+Select Count(*) From TwitterMod Where type='text';
+
+
+//See if bucket works
+set hive.enforce.bucketing = true;
+Select Count(`date`) FROM TwitterMod Tablesample(Bucket 1 out of 3 on `date`);
+Select Count(`date`) FROM Twitter;

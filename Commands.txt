@@ -1,0 +1,65 @@
+//Creating the GameTable
+
+Create Table GameTable (marketplace string, customer_id string, review_id string, product_id string, product_parent string, product_title string, product_category string, star_rating int, helpful_votes int, total_votes int, vine string, verified_purchase string, review_headline string, review_body string, review_date string) ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' LINES TERMINATED BY '\n' STORED AS TEXTFILE;
+
+
+//Loading data into GameTable from local disk
+
+Load Data Local Inpath '/home/sg8rq/Downloads/Hive/InputFile/amazon_reviews_us_Digital_Video_Games_v1_00.tsv' Into Table gametable;
+
+
+//Querying data from GameTable
+
+Select marketplace, product_category, count(review_id) AS total_review_count, AVG(star_rating) AS average_star_rating FROM gametable Where marketplace != "US" GROUP BY marketplace, product_category;
+
+
+//Creating the GameTablePart and partitioned by star rating
+
+CREATE TABLE GameTablePart (marketplace string, customer_id string, review_id string, product_id string, product_parent string, product_title string, product_category string, helpful_votes int, total_votes int, vine string, verified_purchase string, review_headline string, review_body string, review_date String) PARTITIONED BY (star_rating INT) ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' LINES TERMINATED BY '\n' STORED AS TEXTFILE;
+
+
+//Inserting data into GameTablePart (star_rating = 1)
+
+Insert Into gametablepart Partition (star_rating = 1) Select marketplace, customer_id, review_id, product_id, product_parent, product_title, product_category, helpful_votes, total_votes, vine, verified_purchase, review_headline, review_body, review_date From gametable Where star_rating = 1;
+
+
+//Inserting data into GameTablePart (star_rating = 2)
+
+Insert Into gametablepart Partition (star_rating = 2) Select marketplace, customer_id, review_id, product_id, product_parent, product_title, product_category, helpful_votes, total_votes, vine, verified_purchase, review_headline, review_body, review_date From gametable Where star_rating = 2;
+
+
+//see star rating, sum of helpful votes and sum of total votes grouped by star rating from gametablepart ordered by total votes in desc 
+
+SELECT star_rating, SUM(helpful_votes) AS sum_helpful_votes, SUM(total_votes) AS sum_total_votes FROM gametablepart GROUP BY star_rating ORDER BY sum_total_votes DESC;
+
+
+//Creating the GameTableBuck with 3 buckets
+
+CREATE TABLE GameTableBuck ( marketplace STRING, customer_id STRING, review_id STRING, product_id STRING, product_parent STRING, product_title STRING, product_category STRING, star_rating INT, helpful_votes INT, total_votes INT, vine STRING, verified_purchase STRING, review_headline STRING, review_body STRING, review_date STRING) CLUSTERED BY (review_date) INTO 3 BUCKETS;
+
+
+//Loading data into GameTableBuck from gametable
+
+Insert into table gametablebuck select * from gametable;
+
+
+//Finding the date range for bucket 0
+
+SELECT MIN(review_date), MAX(review_date) FROM gametablebuck WHERE INPUT__FILE__NAME LIKE "%00000_0";
+
+
+//Finding the date range for bucket 1
+
+SELECT MIN(review_date), MAX(review_date) FROM gametablebuck WHERE INPUT__FILE__NAME LIKE "%00001_0";
+
+
+//Finding the date range for bucket 2
+
+SELECT MIN(review_date), MAX(review_date) FROM gametablebuck WHERE INPUT__FILE__NAME LIKE "%00002_0";
+
+
+//See product_id having average_helpful_votes greater than 1 by grouping product_id
+
+SELECT product_id, AVG(helpful_votes) as average_helpful_votes, AVG(total_votes) from gametablebuck group by product_id having average_helpful_votes >1;
+
+

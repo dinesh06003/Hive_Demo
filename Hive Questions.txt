@@ -1,0 +1,9 @@
+Download amazon video game review data from the link https://nijianmo.github.io/amazon/index.html or https://cseweb.ucsd.edu/~jmcauley/datasets.html#amazon_reviews. 
+
+ 
+Download the dataset and insert into a table named 'GameTable'. Based on the data, design the fields of your table with appropriate data types.
+For each ‘marketplace’ & ‘product category’, find the total number of ‘review_id’ & average ‘star_rating’ where  ‘marketplace’ does not include ‘US’.
+Create a table 'GameTablePart' that supports partitioning on 'star_rating' field. Fill up data for partitions 'star_rating=1' and 'star_rating=2' from the 'GameTable'.
+For each ‘star_rating’ from 'GameTablePart' table, find sum of ‘helpful_votes’ and sum of ‘total_votes’ ordered by sum of 'total_votes' descending.
+Create a table 'GameTableBuck' that supports bucketing on 'review_date' field. Consider 3 buckets. For each bucket, find the minimum and maximum 'review_date'.
+For each ‘product_id’, find the average ‘helpful_votes’ and average ‘total_votes’ where average 'helpful_votes' is greater than 1.
