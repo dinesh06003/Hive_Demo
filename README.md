@@ -1,5 +1,5 @@
 # Hive
-
+Download the dataset from [Amazon Video game](https://drive.google.com/file/d/1Un4tAI-yEs8uXoZq9Q1iiH6KEvAxNa-D/view?usp=sharing)
 ### run jps and check if hadoop services are active. If NOT active, then only run:
 stop-all.sh<br>
 hadoop namenode -format<br>
